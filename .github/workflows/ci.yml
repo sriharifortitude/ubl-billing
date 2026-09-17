@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20.11', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Smoke-test the CLI
+        run: |
+          node dist/cli/index.js rules | tail -1
+          cat > /tmp/inv.json <<'JSON'
+          {"number":"RE-1","issueDate":"2026-09-17","dueDate":"2026-10-17","currency":"EUR","buyerReference":"PO-1",
+           "seller":{"name":"Muster GmbH","vatId":"DE123456789","electronicAddress":{"scheme":"9930","value":"DE123456789"},"address":{"city":"Berlin","countryCode":"DE"}},
+           "buyer":{"name":"Kunde AG","vatId":"DE987654321","electronicAddress":{"scheme":"0204","value":"04011000-12345-67"},"address":{"city":"München","countryCode":"DE"}},
+           "lines":[{"id":"1","quantity":"3","unitCode":"C62","netPrice":"0.3333","itemName":"Widget","vatCategory":"S","vatRate":"19"}]}
+          JSON
+          node dist/cli/index.js build /tmp/inv.json -o /tmp/inv.xml
+          node dist/cli/index.js validate /tmp/inv.xml
