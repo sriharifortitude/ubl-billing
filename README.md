@@ -116,10 +116,11 @@ Italy's SDI rules). These are the natural next additions.
 ## Install
 
 ```bash
-npm install ubl-billing
+npm install github:sriharifortitude/ubl-billing#v0.1.0
 ```
 
-Node 20.11+. No native dependencies.
+Not on npm yet; the line above installs the tagged release from GitHub
+and builds it on install (`prepare`). Node 20.11+. No native dependencies.
 
 ## Testing
 
