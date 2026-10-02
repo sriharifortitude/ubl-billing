@@ -87,18 +87,19 @@ export function toUbl(invoice: Invoice, options: SerializeOptions = {}): string 
   }
 
   // BG-16
-  if (invoice.payment !== undefined) {
+  for (const payment of [invoice.payment, ...(invoice.furtherPayments ?? [])]) {
+    if (payment === undefined) continue;
     const means = doc.ele(NS.cac, 'cac:PaymentMeans');
-    const code = cbc(means, 'PaymentMeansCode', invoice.payment.meansCode);
-    if (invoice.payment.meansText !== undefined) code.att('name', invoice.payment.meansText);
+    const code = cbc(means, 'PaymentMeansCode', payment.meansCode);
+    if (payment.meansText !== undefined) code.att('name', payment.meansText);
     if (isCreditNote && invoice.dueDate !== undefined) cbc(means, 'PaymentDueDate', invoice.dueDate);
-    if (invoice.payment.remittanceInformation !== undefined) cbc(means, 'PaymentID', invoice.payment.remittanceInformation);
-    if (invoice.payment.creditTransfer !== undefined) {
+    if (payment.remittanceInformation !== undefined) cbc(means, 'PaymentID', payment.remittanceInformation);
+    if (payment.creditTransfer !== undefined) {
       const account = means.ele(NS.cac, 'cac:PayeeFinancialAccount');
-      cbc(account, 'ID', invoice.payment.creditTransfer.accountId);
-      if (invoice.payment.creditTransfer.accountName !== undefined) cbc(account, 'Name', invoice.payment.creditTransfer.accountName);
-      if (invoice.payment.creditTransfer.serviceProviderId !== undefined) {
-        cbc(account.ele(NS.cac, 'cac:FinancialInstitutionBranch'), 'ID', invoice.payment.creditTransfer.serviceProviderId);
+      cbc(account, 'ID', payment.creditTransfer.accountId);
+      if (payment.creditTransfer.accountName !== undefined) cbc(account, 'Name', payment.creditTransfer.accountName);
+      if (payment.creditTransfer.serviceProviderId !== undefined) {
+        cbc(account.ele(NS.cac, 'cac:FinancialInstitutionBranch'), 'ID', payment.creditTransfer.serviceProviderId);
       }
     }
   }

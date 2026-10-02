@@ -62,7 +62,7 @@ const back = fromUbl(xml);      // and back again
   allowances and charges. You supply what you know; it computes what the
   standard defines. Amounts are decimal *strings* at the boundary so a JSON
   payload cannot smuggle a float in.
-- **`validate`** runs 78 rules — EN 16931 `BR-*`, `BR-CO-*`, `BR-DEC-*`, the
+- **`validate`** runs 162 rules — EN 16931 `BR-*`, `BR-CO-*`, `BR-DEC-*`, the
   per-category VAT rules, and the Peppol `PEPPOL-EN16931-R*` set — and
   returns every violation with the rule id the recipient would cite.
 - **`toUbl` / `fromUbl`** serialise to and parse from UBL 2.1 Invoice and
@@ -97,26 +97,63 @@ comment, not from the code's output.
 
 ## Rule coverage, honestly
 
-78 rule ids are implemented — `ubl-billing rules` lists them. EN 16931 has
-around 200 and Peppol adds around 90 more, many of them national. What is
-here is the set that rejects documents in practice: every arithmetic rule,
-every per-category VAT rule, the mandatory-field rules, the decimal
-constraints, and the Peppol identity rules.
+162 rule ids are implemented — `ubl-billing rules` lists them. EN 16931 has
+around 200 and Peppol adds around 90 more, many of them national.
 
 Rules the typed model makes impossible to violate are deliberately **not**
-listed as implemented. `BR-08` (seller address present) cannot fail when the
-type requires it; counting it would inflate the number without adding a
-check.
+listed as implemented, so a count is not inflated by checks that cannot fail.
 
 Not implemented: code-list validation against live ISO lists (currency and
 country are checked by shape only), the full schematron for line-level
-allowance/charge VAT, and national CIUS rules (XRechnung's `BR-DE-*`,
-Italy's SDI rules). These are the natural next additions.
+allowance/charge VAT, the document-level references (`BR-17`..`BR-20`,
+`BR-52`, `BR-54`..`BR-57`) and national CIUS rules (XRechnung's `BR-DE-*`,
+Italy's SDI rules).
+
+`BR-CO-25` (a due date or payment terms when an amount is due) was removed
+from the standard in 1.3.16 and is off by default. Pass
+`{ paymentTermsRequired: true }` to `validate` if you want it anyway.
+
+## Conformance against the official validator
+
+The numbers above say what is implemented, not whether it is right. So the
+rules are tested against the standard's own artefacts: the official EN 16931
+Schematron, compiled to XSLT 2.0 and run by Saxon-HE, over a corpus built
+from the 19 official UBL example invoices plus single-fault mutations of them
+(an element dropped, an amount nudged, a VAT category swapped).
+
+```bash
+conformance/fetch.sh            # pinned, sha256-verified download; needs curl + a JDK
+npx tsx conformance/run.ts      # 5,872 documents, a few minutes
+```
+
+Last run, against validation artefacts 1.3.16:
+
+| | |
+| --- | --- |
+| valid documents ubl-billing accepts | 1695 of 1695 |
+| invalid documents ubl-billing rejects | 3927 of 4177 (94.0%) |
+| rules exercised by the corpus that ubl-billing implements | 125, none letting an invalid document through |
+
+The 250 invalid documents that get through violate only rules ubl-billing
+does not implement: the document references listed above, the code lists
+(`BR-CL-*`) and the UBL syntax rules (`UBL-SR-*`). The run fails on any rule ubl-billing implements
+that accepts a document the official validator rejects, any valid document it
+refuses, and any rule id it cites that the standard does not contain. One
+mutated document crashes the official validator itself and is excluded. What
+the corpus cannot show: it is built from 19 invoices, so a rule none of them
+exercises is not tested here.
+
+Writing this found defects in the first release that its own tests had not:
+a rounding rule that followed half-up instead of XPath's round-half-up-towards-
+infinity, VAT rules that demanded exact equality where the standard allows one
+currency unit, category `B` (Italian split payment) unknown, a parser that
+refused documents instead of reporting the missing element as a business rule,
+and payment rules that checked only the first payment instruction.
 
 ## Install
 
 ```bash
-npm install github:sriharifortitude/ubl-billing#v0.1.0
+npm install github:sriharifortitude/ubl-billing#v0.2.0
 ```
 
 Not on npm yet; the line above installs the tagged release from GitHub
@@ -125,7 +162,7 @@ and builds it on install (`prepare`). Node 20.11+. No native dependencies.
 ## Testing
 
 ```bash
-npm test     # 52 tests: arithmetic against hand-worked figures, every rule
+npm test     # 67 tests: arithmetic against hand-worked figures, every rule
              # firing and not firing, serialise → parse round trip, credit notes
 ```
 
@@ -133,8 +170,9 @@ npm test     # 52 tests: arithmetic against hand-worked figures, every rule
 
 See [`docs/adr/`](docs/adr/) for: why decimal strings at the boundary, why
 `calculate()` re-parses its input, why exemption reasons are input rather
-than inferred, and why the parser reports inconsistent totals instead of
-repairing them.
+than inferred, why the parser reports inconsistent totals instead of
+repairing them, and why the official validator is the oracle rather than a
+hand-written expected list.
 
 ## Licence
 

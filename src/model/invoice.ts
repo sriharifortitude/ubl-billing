@@ -34,6 +34,28 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'must be an ISO date, YY
 const vatCategory = z.enum(Object.keys(VAT_CATEGORIES) as [keyof typeof VAT_CATEGORIES, ...Array<keyof typeof VAT_CATEGORIES>]);
 const invoiceTypeCode = z.enum(Object.keys(INVOICE_TYPE_CODES) as [keyof typeof INVOICE_TYPE_CODES, ...Array<keyof typeof INVOICE_TYPE_CODES>]);
 const paymentMeansCode = z.enum(Object.keys(PAYMENT_MEANS_CODES) as [keyof typeof PAYMENT_MEANS_CODES, ...Array<keyof typeof PAYMENT_MEANS_CODES>]);
+
+const paymentSchema = z
+  .object({
+    /** BT-81 */
+    meansCode: paymentMeansCode,
+    /** BT-82 */
+    meansText: z.string().min(1).optional(),
+    /** BT-83: remittance information. */
+    remittanceInformation: z.string().min(1).optional(),
+    /** BG-17: credit transfer account. */
+    creditTransfer: z
+      .object({
+        /** BT-84 */
+        accountId: z.string().min(1),
+        /** BT-85 */
+        accountName: z.string().min(1).optional(),
+        /** BT-86 */
+        serviceProviderId: z.string().min(1).optional(),
+      })
+      .optional(),
+  });
+
 const electronicAddressScheme = z.enum(
   Object.keys(ELECTRONIC_ADDRESS_SCHEMES) as [keyof typeof ELECTRONIC_ADDRESS_SCHEMES, ...Array<keyof typeof ELECTRONIC_ADDRESS_SCHEMES>],
 );
@@ -166,6 +188,28 @@ export const invoiceInputSchema = z.object({
   note: z.string().min(1).optional(),
   /** BG-3: preceding invoice references, required for credit notes in some CIUS. */
   precedingInvoiceReferences: z.array(z.object({ number: z.string().min(1), issueDate: isoDate.optional() })).optional(),
+  /** BT-63: seller tax representative VAT identifier. Stands in for the seller's own (BR-S-02, BR-IC-02 and companions). */
+  taxRepresentativeVatId: z.string().min(3).optional(),
+  /** BG-13: delivery information. */
+  delivery: z
+    .object({
+      /** BT-72: actual delivery date. */
+      date: isoDate.optional(),
+      /** BT-80: deliver-to country code. */
+      countryCode: z.string().regex(COUNTRY_CODE_PATTERN).optional(),
+    })
+    .optional(),
+  /** BG-14: invoicing period. */
+  invoicePeriod: z
+    .object({
+      /** BT-73 */
+      startDate: isoDate.optional(),
+      /** BT-74 */
+      endDate: isoDate.optional(),
+      /** BT-8: VAT point date code. */
+      descriptionCode: z.string().min(1).optional(),
+    })
+    .optional(),
   /** BG-4 */
   seller: partySchema,
   /** BG-7 */
@@ -173,27 +217,9 @@ export const invoiceInputSchema = z.object({
   /** BG-10: payee, if different from seller. */
   payee: z.object({ name: z.string().min(1), legalRegistrationId: z.string().min(1).optional() }).optional(),
   /** BG-16: payment instructions. */
-  payment: z
-    .object({
-      /** BT-81 */
-      meansCode: paymentMeansCode,
-      /** BT-82 */
-      meansText: z.string().min(1).optional(),
-      /** BT-83: remittance information. */
-      remittanceInformation: z.string().min(1).optional(),
-      /** BG-17: credit transfer account. */
-      creditTransfer: z
-        .object({
-          /** BT-84 */
-          accountId: z.string().min(1),
-          /** BT-85 */
-          accountName: z.string().min(1).optional(),
-          /** BT-86 */
-          serviceProviderId: z.string().min(1).optional(),
-        })
-        .optional(),
-    })
-    .optional(),
+  payment: paymentSchema.optional(),
+  /** Further BG-16 instructions: a received document may carry several. */
+  furtherPayments: z.array(paymentSchema).optional(),
   /** BT-20: payment terms text. */
   paymentTerms: z.string().min(1).optional(),
   /** BT-113: paid amount, subtracted to reach BT-115 amount due. */
@@ -235,7 +261,7 @@ export interface Line extends LineInput {
 export interface VatBreakdownEntry {
   /** BT-118 */
   readonly category: keyof typeof VAT_CATEGORIES;
-  /** BT-119: absent for O; zero for Z/E/AE/K/G. */
+  /** BT-119: absent for O; zero for Z/E/AE/K/G. Absent here also means the document had none. */
   readonly rate?: string;
   /** BT-116 */
   readonly taxableAmount: string;
@@ -257,8 +283,10 @@ export interface Totals {
   readonly chargeTotalAmount: string;
   /** BT-109 */
   readonly taxExclusiveAmount: string;
-  /** BT-110 */
+  /** BT-110: in the invoice currency. */
   readonly taxAmount: string;
+  /** BT-111: the same VAT in the VAT accounting currency, when BT-6 says it differs. */
+  readonly taxAmountInAccountingCurrency?: string;
   /** BT-112 */
   readonly taxInclusiveAmount: string;
   /** BT-113 */

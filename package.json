@@ -1,6 +1,6 @@
 {
   "name": "ubl-billing",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Build, calculate, validate and parse EN 16931 electronic invoices (Peppol BIS Billing 3.0, UBL 2.1). Exact decimal arithmetic, rule IDs from the specification.",
   "type": "module",
   "engines": { "node": ">=20.11" },
@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src tests",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "conformance": "tsx conformance/run.ts"
   },
   "dependencies": {
     "commander": "^12.1.0",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@types/node": "^22.10.2",
+    "@xmldom/xmldom": "^0.9.12",
     "eslint": "^9.17.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",

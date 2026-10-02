@@ -6,3 +6,4 @@
 | [0002](0002-calculate-re-parses-its-input.md) | `calculate()` re-parses its input through the schema |
 | [0003](0003-exemption-reasons-are-input.md) | VAT exemption reasons are supplied, not inferred |
 | [0004](0004-parse-reports-does-not-repair.md) | The parser reports inconsistent documents rather than repairing them |
+| [0005](0005-official-validator-is-the-oracle.md) | The official Schematron is the oracle; differences are gated, not scored |

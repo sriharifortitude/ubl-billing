@@ -112,8 +112,8 @@ describe('fromUbl round trip', () => {
     expect(() => fromUbl('<?xml version="1.0"?><Order xmlns="urn:x"><ID>1</ID></Order>')).toThrow(UblParseError);
   });
 
-  it('names the missing element when a required one is absent', () => {
+  it('reads a document with missing elements and reports them as business rules', () => {
     const xml = toUbl(calculate(domesticInvoice)).replace(/<cac:LegalMonetaryTotal>[\s\S]*?<\/cac:LegalMonetaryTotal>/, '');
-    expect(() => fromUbl(xml)).toThrow(/LegalMonetaryTotal/);
+    expect(validate(fromUbl(xml)).map((v) => v.rule)).toContain('BR-CO-15');
   });
 });

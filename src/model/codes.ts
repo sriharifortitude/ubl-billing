@@ -30,12 +30,13 @@ export const VAT_CATEGORIES = {
   O: 'Services outside scope of tax',
   L: 'Canary Islands general indirect tax',
   M: 'Tax for production, services and importation in Ceuta and Melilla',
+  B: 'Transferred (VAT), only in Italy (split payment)',
 } as const;
 export type VatCategory = keyof typeof VAT_CATEGORIES;
 
 /**
  * Categories where the rate must be zero and an exemption reason is
- * expected (BR-E-10, BR-AE-10, BR-K-10, BR-G-10, BR-O-10 and companions).
+ * expected (BR-E-10, BR-AE-10, BR-IC-10, BR-G-10, BR-O-10 and companions).
  */
 export const ZERO_RATE_CATEGORIES: ReadonlySet<VatCategory> = new Set(['Z', 'E', 'AE', 'K', 'G', 'O']);
 
@@ -169,3 +170,28 @@ export const ELECTRONIC_ADDRESS_SCHEMES = {
   '9959': 'Employer Identification Number (EIN, USA)',
 } as const;
 export type ElectronicAddressScheme = keyof typeof ELECTRONIC_ADDRESS_SCHEMES;
+
+/**
+ * The prefixes BR-CO-09 accepts on a VAT identifier, copied from the official
+ * Schematron (EN16931-UBL-model.sch, release validation-1.3.16) rather than
+ * assumed to be "any two letters". 252 entries: the ISO 3166-1 alpha-2 codes
+ * plus "EL" (Greece's VAT prefix), "XI" (Northern Ireland) and "1A".
+ */
+export const VAT_ID_PREFIXES: ReadonlySet<string> = new Set([
+  '1A', 'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX',
+  'AZ', 'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR',
+  'BS', 'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM',
+  'CN', 'CO', 'CR', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC',
+  'EE', 'EG', 'EH', 'EL', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FM', 'FO', 'FR', 'GA', 'GB', 'GD',
+  'GE', 'GF', 'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY',
+  'HK', 'HM', 'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT',
+  'JE', 'JM', 'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ', 'LA',
+  'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG',
+  'MH', 'MK', 'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY',
+  'MZ', 'NA', 'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE',
+  'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY', 'QA', 'RE', 'RO', 'RS',
+  'RU', 'RW', 'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO',
+  'SR', 'SS', 'ST', 'SV', 'SX', 'SY', 'SZ', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM',
+  'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE',
+  'VG', 'VI', 'VN', 'VU', 'WF', 'WS', 'XI', 'YE', 'YT', 'ZA', 'ZM', 'ZW',
+]);

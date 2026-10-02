@@ -37,3 +37,19 @@ jobs:
           JSON
           node dist/cli/index.js build /tmp/inv.json -o /tmp/inv.xml
           node dist/cli/index.js validate /tmp/inv.xml
+
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci --ignore-scripts
+      - run: bash conformance/fetch.sh
+      - run: npm run conformance

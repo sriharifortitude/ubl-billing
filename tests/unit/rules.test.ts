@@ -33,7 +33,7 @@ describe('arithmetic rules catch hand-edited totals', () => {
 
   it('BR-CO-17 when a breakdown tax amount does not follow from its rate', () => {
     const [seven, nineteen] = base.vatBreakdown;
-    expect(rulesOf({ ...base, vatBreakdown: [seven!, { ...nineteen!, taxAmount: '218.70' }] })).toContain('BR-CO-17');
+    expect(rulesOf({ ...base, vatBreakdown: [seven!, { ...nineteen!, taxAmount: '230.00' }] })).toContain('BR-CO-17');
   });
 
   it('BR-S-08 when a breakdown taxable amount does not match its lines', () => {
@@ -112,8 +112,10 @@ describe('structural rules', () => {
     expect(rulesOf(invoice)).toContain('BR-21');
   });
 
-  it('BR-CO-25: a positive amount due needs a due date or payment terms', () => {
-    expect(rulesOf(calculate({ ...domesticInvoice, dueDate: undefined, paymentTerms: undefined }))).toContain('BR-CO-25');
+  it('BR-CO-25 is opt-in: it was removed from the standard in 1.3.16', () => {
+    const invoice = calculate({ ...domesticInvoice, dueDate: undefined, paymentTerms: undefined });
+    expect(rulesOf(invoice)).not.toContain('BR-CO-25');
+    expect(validate(invoice, { paymentTermsRequired: true }).map((v) => v.rule)).toContain('BR-CO-25');
   });
 
   it('BR-CO-09: a VAT id needs a country prefix', () => {

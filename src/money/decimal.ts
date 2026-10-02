@@ -64,3 +64,19 @@ export function formatPercent(value: Amount): string {
 export function decimalPlaces(value: Amount): number {
   return value.decimalPlaces();
 }
+
+/**
+ * A decimal, or undefined when the text is empty or not a number. Validation
+ * runs on documents that may be missing amounts or contain garbage, and a
+ * rule that throws on "" instead of reporting is a validator that crashes on
+ * exactly the invoices that need validating.
+ */
+export function tryAmount(value: string | undefined): Amount | undefined {
+  if (value === undefined || value.trim() === '') return undefined;
+  try {
+    const parsed = new Decimal(value.trim());
+    return parsed.isFinite() ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
